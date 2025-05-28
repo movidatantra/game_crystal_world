@@ -16,6 +16,7 @@ public class PlayerMovement : MonoBehaviour
     private PlayerController playerController;
 
     private Vector2 moveInput;
+    private float mobileInputX = 0f;
     private bool isJumping = false;
 
     private enum MovementState { idle, walk, jump, fall, run }
@@ -60,7 +61,15 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        moveInput = playerController.Movement.Move.ReadValue<Vector2>();
+        // Deteksi platform: gunakan UI mobile jika di mobile
+        if (Application.isMobilePlatform)
+        {
+            moveInput = new Vector2(mobileInputX, 0f);
+        }
+        else
+        {
+            moveInput = playerController.Movement.Move.ReadValue<Vector2>();
+        }
     }
 
     private void FixedUpdate()
@@ -68,18 +77,26 @@ public class PlayerMovement : MonoBehaviour
         Vector2 targetVelocity = new Vector2(moveInput.x * moveSpeed, rb.velocity.y);
         rb.velocity = targetVelocity;
         UpdateAnimation();
+
+        // Reset loncat jika menyentuh tanah
+        if (isGrounded() && Mathf.Abs(rb.velocity.y) < 0.01f)
+        {
+            isJumping = false;
+        }
     }
 
     private void UpdateAnimation()
     {
         MovementState state;
 
-        if (moveInput.x > 0f)
+        float horizontal = moveInput.x;
+
+        if (horizontal > 0f)
         {
             state = MovementState.walk;
             sprite.flipX = false;
         }
-        else if (moveInput.x < 0f)
+        else if (horizontal < 0f)
         {
             state = MovementState.walk;
             sprite.flipX = true;
@@ -111,26 +128,26 @@ public class PlayerMovement : MonoBehaviour
         if (isGrounded())
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            isJumping = true;
         }
     }
 
     private void MeleeAttack()
     {
-        anim.SetTrigger("attack"); // Pastikan animator punya trigger "attack"
+        anim.SetTrigger("attack");
 
-        // Deteksi musuh di sekitar
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayers);
 
         foreach (Collider2D enemy in hitEnemies)
         {
             Debug.Log("Hit: " + enemy.name);
-            // enemy.GetComponent<Enemy>().TakeDamage(damage); // jika punya script Enemy
+            // enemy.GetComponent<Enemy>().TakeDamage(damage);
         }
     }
 
     private void ThrowProjectile()
     {
-        anim.SetTrigger("throw"); // Pastikan animator punya trigger "throw"
+        anim.SetTrigger("throw");
 
         GameObject projectile = Instantiate(projectilePrefab, throwPoint.position, Quaternion.identity);
         Rigidbody2D rbProj = projectile.GetComponent<Rigidbody2D>();
@@ -145,5 +162,37 @@ public class PlayerMovement : MonoBehaviour
         if (attackPoint == null) return;
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+    }
+
+    // ===== MOBILE UI HANDLERS =====
+    public void MoveRight(bool isPressed)
+    {
+        if (isPressed)
+            mobileInputX = 1f;
+        else if (mobileInputX == 1f)
+            mobileInputX = 0f;
+    }
+
+    public void MoveLeft(bool isPressed)
+    {
+        if (isPressed)
+            mobileInputX = -1f;
+        else if (mobileInputX == -1f)
+            mobileInputX = 0f;
+    }
+
+    public void MobileJump()
+    {
+        Jump();
+    }
+
+    public void MobileAttack()
+    {
+        MeleeAttack();
+    }
+
+    public void MobileThrow()
+    {
+        ThrowProjectile();
     }
 }
