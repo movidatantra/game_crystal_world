@@ -527,6 +527,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
+  runSpeed: 8
   jumpForce: 10
   jumpableGround:
     serializedVersion: 2
@@ -18866,7 +18867,7 @@ MonoBehaviour:
         m_Calls:
         - m_Target: {fileID: 269332326}
           m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
-          m_MethodName: MoveLeft
+          m_MethodName: MoveRight
           m_Mode: 6
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
